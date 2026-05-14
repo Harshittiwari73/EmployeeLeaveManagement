@@ -44,13 +44,15 @@ public class AccountController : Controller
                 }
 
                 var token = _jwtTokenService.GenerateToken(user);
-                
+
                 var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true, 
-                    SameSite = SameSiteMode.Strict,
-                    Expires = model.RememberMe ? DateTime.UtcNow.AddDays(7) : null
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = model.RememberMe
+        ? DateTime.UtcNow.AddDays(7)
+        : DateTime.UtcNow.AddHours(2)
                 };
                 Response.Cookies.Append("jwtToken", token, cookieOptions);
 
