@@ -26,7 +26,7 @@ builder.Services.AddDbContext<EmployeeLeaveManagementContext>(options =>
     {
         // Live Supabase PostgreSQL
         options.UseNpgsql(
-            builder.Configuration.GetConnectionString("DefaultConnection"));
+        builder.Configuration.GetConnectionString("DefaultConnection"));
     }
 });
 
