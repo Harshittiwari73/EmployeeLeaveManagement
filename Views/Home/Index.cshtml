@@ -1,0 +1,124 @@
+@model IEnumerable<EmployeeLeaveManagement.Models.LeaveRequest>
+
+<div class="dashboard-cards">
+    <div class="dashboard-card border-0 shadow-sm">
+        <h5>Total Employees</h5>
+        <h2>@(ViewBag.TotalEmployees ?? 0)</h2>
+        <p class="text-success"><i class="bi bi-arrow-up-short"></i> Active in system</p>
+    </div>
+    <div class="dashboard-card border-0 shadow-sm" style="--primary: #3B82F6;">
+        <h5>Pending Requests</h5>
+        <h2>@(ViewBag.PendingLeaves ?? 0)</h2>
+        <p class="text-warning"><i class="bi bi-clock-history"></i> Requires action</p>
+    </div>
+    <div class="dashboard-card border-0 shadow-sm" style="--primary: #10B981;">
+        <h5>Approved Requests</h5>
+        <h2>@(ViewBag.ApprovedLeaves ?? 0)</h2>
+        <p class="text-success"><i class="bi bi-check-circle"></i> On schedule</p>
+    </div>
+    <div class="dashboard-card border-0 shadow-sm" style="--primary: #EF4444;">
+        <h5>Rejected Requests</h5>
+        <h2>@(ViewBag.RejectedLeaves ?? 0)</h2>
+        <p class="text-muted">Currently rejected</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="table-container border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0">Recent Leave Requests</h3>
+                <a asp-controller="LeaveRequests" asp-action="Index" class="btn btn-light btn-sm fw-bold">View All</a>
+            </div>
+
+            <div class="premium-table-scroll border-0">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr class="text-muted small">
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null)
+                        {
+                            @foreach (var item in Model.Take(5))
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@item.Employee?.EmployeeName</div>
+                                    </td>
+                                    <td><span class="text-muted">@item.LeaveType?.LeaveTypeName</span></td>
+                                    <td>
+                                        <span class="small fw-semibold text-muted">@(item.FromDate?.ToString("dd MMM")) - @(item.ToDate?.ToString("dd MMM yyyy"))</span>
+                                    </td>
+                                    <td>
+                                        @if (item.Status == "Approved")
+                                        {
+                                            <span class="badge bg-success-soft rounded-pill">Approved</span>
+                                        }
+                                        else if (item.Status == "Rejected")
+                                        {
+                                            <span class="badge bg-danger-soft rounded-pill">Rejected</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning-soft rounded-pill">Pending</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="table-container border-0 shadow-sm">
+            <h3 class="mb-4">Recent Activity</h3>
+            <div class="recent-activity-scroll pe-2">
+                @if (Model != null)
+                {
+                    @foreach (var item in Model.Take(6))
+                    {
+                        <div class="activity-item mb-3">
+                            <div class="d-flex gap-3">
+                                <div class="flex-shrink-0">
+                                    @if (item.Status == "Approved")
+                                    {
+                                        <div class="bg-success-soft rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="bi bi-check-lg fw-bold"></i>
+                                        </div>
+                                    }
+                                    else if (item.Status == "Rejected")
+                                    {
+                                        <div class="bg-danger-soft rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="bi bi-x-lg fw-bold"></i>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-warning-soft rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="bi bi-clock-fill"></i>
+                                        </div>
+                                    }
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold" style="font-size: 0.875rem;">
+                                        @(item.Status == "Approved" ? "Leave Approved" : item.Status == "Rejected" ? "Leave Rejected" : "New Application")
+                                    </h6>
+                                    <p class="text-muted mb-0 small">@item.Employee?.EmployeeName's request</p>
+                                    <small class="text-secondary smaller">@(item.AppliedDate?.ToString("dd MMM, hh:mm tt"))</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

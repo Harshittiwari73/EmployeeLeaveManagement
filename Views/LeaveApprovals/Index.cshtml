@@ -1,0 +1,233 @@
+@model IEnumerable<EmployeeLeaveManagement.Models.LeaveRequest>
+@using EmployeeLeaveManagement.Helpers
+@{
+    bool canApprove = await PermissionHelper.HasPermission(User, "LeaveRequest", "Approve", Context);
+    bool canReject = await PermissionHelper.HasPermission(User, "LeaveRequest", "Reject", Context);
+}
+
+<div class="table-container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+
+        <div>
+            <h3 class="mb-1 fw-bold text-primary">Leave Approval</h3>
+            <p class="text-muted mb-0 small">
+                Manage employee leave requests
+            </p>
+        </div>
+
+        <div class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+            @Model.Count(x => x.Status == "Pending") Pending Approvals
+        </div>
+
+    </div>
+    <div class="filter-row mb-3 d-flex flex-wrap gap-2">
+        <input type="text"
+               id="employeeSearch"
+               class="form-control filter-input"
+               placeholder="Search Employee..."
+               value="@ViewBag.EmployeeSearch"
+               style="max-width: 220px;" />
+
+        <input type="text"
+               id="leaveTypeSearch"
+               class="form-control filter-input"
+               placeholder="Leave Type..."
+               value="@ViewBag.LeaveTypeSearch"
+               style="max-width: 180px;" />
+
+        <select id="statusSearch"
+                class="form-select filter-input"
+                style="max-width: 150px;">
+            <option value="">Status</option>
+            <option value="Approved" selected="@(ViewBag.StatusSearch == "Approved")">Approved</option>
+            <option value="Rejected" selected="@(ViewBag.StatusSearch == "Rejected")">Rejected</option>
+            <option value="Pending" selected="@(ViewBag.StatusSearch == "Pending")">Pending</option>
+        </select>
+
+        <button id="applyFilters"
+                class="btn btn-primary px-3">
+            <i class="bi bi-filter"></i> Apply
+        </button>
+
+        <button id="resetFilters"
+                class="btn btn-outline-secondary px-3">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+    <div class="premium-table-scroll">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>Employee</th>
+                    <th>Leave Type</th>
+                    <th>Duration</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @if (Model != null && Model.Any())
+
+
+
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <div>
+                                        <p class="mb-0 fw-bold">
+                                            @(item.Employee?.EmployeeName ?? "N/A")
+                                        </p>
+
+                                        <p class="mb-0 text-muted"
+                                           style="font-size:11px;">
+                                            Applied on @(item.AppliedDate?.ToString("dd MMM yyyy"))
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @(item.LeaveType?.LeaveTypeName ?? "N/A")
+                                </span>
+                            </td>
+                            <td>
+
+                                @if (item.FromDate != null && item.ToDate != null)
+
+
+
+                                {
+                                    <div class="small">
+                                        <span class="fw-bold">
+                                            @item.FromDate?.ToString("dd MMM")
+                                        </span>
+
+                                        -
+
+                                        <span class="fw-bold">
+                                            @item.ToDate?.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                }
+
+
+
+                                else
+
+
+
+                                {
+                                    <span class="text-muted small">N/A</span>
+                                }
+
+                            </td>
+                            <td style="max-width:250px;">
+
+                                <p class="mb-0 text-muted small text-truncate"
+                                   title="@item.Reason">
+
+                                    @(string.IsNullOrEmpty(item.Reason)
+                                        ? "No reason provided"
+                                        : item.Reason.Length > 40
+                                        ? item.Reason.Substring(0, 37) + "..."
+                                        : item.Reason)
+
+                                </p>
+
+                            </td>
+                            <td>
+
+                                @if (item.Status == "Approved")
+                                {
+                                    <span class="badge bg-success-soft px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-check-circle-fill small"></i>
+                                        Approved
+                                    </span>
+                                }
+                                else if (item.Status == "Rejected")
+                                {
+                                    <span class="badge bg-danger-soft px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-x-circle-fill small"></i>
+                                        Rejected
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-soft px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-hourglass-split small"></i>
+                                        Pending
+                                    </span>
+                                }
+
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    @if (item.Status == "Pending")
+                                    {
+                                        @if (canApprove)
+                                        {
+                                            <form asp-action="Approve" asp-route-id="@item.LeaveRequestId" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
+                                                    <i class="bi bi-check-lg"></i> Approve
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (canReject)
+                                        {
+                                            <form asp-action="Reject" asp-route-id="@item.LeaveRequestId" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
+                                                    <i class="bi bi-x-lg"></i> Reject
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small fst-italic">
+                                            <i class="bi bi-patch-check me-1"></i>Processed
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+
+                        </tr>
+                    }
+                }
+
+
+
+                else
+
+
+
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+
+                            No leave requests found
+
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/leaveapproval/leaveapproval.js"></script>
+}

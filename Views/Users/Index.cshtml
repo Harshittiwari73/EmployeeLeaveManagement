@@ -1,0 +1,263 @@
+@model UserListViewModel
+
+@using EmployeeLeaveManagement.Helpers
+@{
+    ViewData["Title"] = "User Management";
+    bool canAdd = await PermissionHelper.HasPermission(User, "User", "Create", Context);
+    bool canEdit = await PermissionHelper.HasPermission(User, "User", "Edit", Context);
+    bool canDelete = await PermissionHelper.HasPermission(User, "User", "Delete", Context);
+}
+<div class="table-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">User Management</h3>
+        @if (canAdd)
+        {
+            <button type="button"
+                    class="btn btn-primary"
+                    onclick="openUserModal(0)">
+                <i class="bi bi-plus-lg me-1"></i> Add New User
+            </button>
+        }
+    </div>
+    <div class="filter-row mb-3 d-flex flex-wrap gap-2">
+        <input type="text"
+               id="usernameSearch"
+               class="form-control filter-input"
+               placeholder="Search Username..."
+               value="@Model.Username"
+               style="max-width: 220px;" />
+        <input type="text"
+               id="emailSearch"
+               class="form-control filter-input"
+               placeholder="Search Email..."
+               value="@Model.Email"
+               style="max-width: 220px;" />
+        <input type="text"
+               id="phoneSearch"
+               class="form-control filter-input"
+               placeholder="Phone Number..."
+               value="@Model.Phone"
+               style="max-width: 180px;" />
+        <select id="roleSearch"
+                class="form-select filter-input"
+                style="max-width: 150px;">
+            <option value="">Role</option>
+            @foreach (var role in (SelectList)ViewBag.Roles)
+            {
+                <option value="@role.Value" selected="@(Model.Role == role.Value)">@role.Text</option>
+            }
+        </select>
+        <select id="statusSearch"
+                class="form-select filter-input"
+                style="max-width: 150px;">
+            <option value="">Status</option>
+            <option value="active" selected="@(Model.Status == "active")">Active</option>
+            <option value="inactive" selected="@(Model.Status == "inactive")">Inactive</option>
+        </select>
+        <button id="applyFilters"
+                class="btn btn-primary px-3">
+            <i class="bi bi-filter me-1"></i> Apply
+        </button>
+        <button id="resetFilters"
+                class="btn btn-outline-secondary px-3">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+    <div class="premium-table-scroll">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th class="sortable" data-column="0">Username</th>
+                    <th class="sortable" data-column="1">Email</th>
+                    <th class="sortable" data-column="2">Phone</th>
+                    <th class="sortable" data-column="3">Role</th>
+                    <th class="sortable" data-column="4">Status</th>
+                    <th class="sortable" data-column="5">Created Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Users != null && Model.Users.Any())
+                {
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">                                   
+                                    <div>
+                                        <div class="fw-semibold"> @user.Username</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>
+                                @(string.IsNullOrEmpty(user.PhoneNumber)? "N/A" : user.PhoneNumber) </td>
+                            <td>
+                                @if (user.RoleName == "Admin")
+                                {
+                                    <span class="badge bg-danger">
+                                        @user.RoleName
+                                    </span>
+                                }
+                                else if (user.RoleName == "Manager")
+                                {
+                                    <span class="badge bg-warning text-dark">@user.RoleName</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info"> @user.RoleName</span>
+                                }
+                            </td>
+                            <td>
+
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge bg-success">Active </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </td>
+                            <td data-date="@user.CreatedDate.ToString("yyyy-MM-dd")">
+                                @user.CreatedDate.ToString("dd MMM yyyy")
+                            </td>
+                            <td>
+                                <div class="d-inline-flex gap-2">
+                                    @if (canEdit)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-outline-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+                                                style="width: 32px; height: 32px;"
+                                                onclick="openUserModal(@user.UserId)">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+                                    }
+                                    @if (canDelete)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-outline-danger btn-sm p-0 d-flex align-items-center justify-content-center"
+                                                style="width: 32px; height: 32px;"
+                                                onclick="deleteUser(@user.UserId, '@user.Username')">
+                                            <i class="bi bi-trash3-fill"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                            <h6 class="fw-bold text-muted">No Users Found </h6>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal fade"
+     id="userModal"
+     tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <div>
+                    <h4 class="modal-title fw-bold mb-1" id="userModalTitle"> Add New User </h4>
+                    <p class="text-muted small mb-0">
+                        Fill all user details
+                    </p>
+                </div>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="userForm">
+                    <input type="hidden"
+                           id="modalUserId"
+                           value="0" />
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold"> USERNAME</label>
+                            <input type="text"
+                                   id="modalUsername"
+                                   class="form-control rounded-3"
+                                   required />
+
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold"> EMAIL ADDRESS</label>
+                            <input type="email"
+                                   id="modalEmail"
+                                   class="form-control rounded-3"
+                                   required />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">PHONE NUMBER</label>
+                            <input type="text"
+                                   id="modalPhone"
+                                   class="form-control rounded-3" />
+
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">USER ROLE </label>
+                            <select id="modalRoleId"
+                                    class="form-select rounded-3">
+                                @foreach (var role in (SelectList)ViewBag.Roles)
+                                {
+                                    <option value="@role.Value">@role.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold"
+                                   id="passwordLabel">
+                                PASSWORD
+                            </label>
+                            <input type="password"
+                                   id="modalPassword"
+                                   class="form-control rounded-3" />
+                            <div class="form-text small"
+                                 id="passwordHint">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="modalIsActive"
+                                       checked>
+                                <label class="form-check-label small fw-bold text-muted ms-2">ACTIVE </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button"
+                                class="btn btn-light rounded-pill px-4"
+                                data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="btn btn-primary rounded-pill px-5 fw-semibold shadow-sm">
+                            Save User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/user/user.js"></script>
+}
