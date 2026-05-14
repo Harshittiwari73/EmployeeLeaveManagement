@@ -108,7 +108,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-DbInitializer.Initialize(app.Services);
+//DbInitializer.Initialize(app.Services);
 
 app.MapControllerRoute(
     name: "default",
